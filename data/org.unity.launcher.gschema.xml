@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.unity.launcher" path="/org/unity/launcher/">
+    <key name="pinned-apps" type="as">
+      <default>[]</default>
+      <summary>Pinned application .desktop ids, in launcher order</summary>
+    </key>
+    <key name="launcher-icon-size" type="i">
+      <default>48</default>
+      <range min="32" max="64"/>
+      <summary>Launcher icon size</summary>
+    </key>
+    <key name="appgrid-icon-size" type="i">
+      <default>96</default>
+      <range min="64" max="128"/>
+      <summary>App-grid icon size</summary>
+    </key>
+    <key name="app-grid-maximized" type="b">
+      <default>false</default>
+      <summary>Open the app grid maximized rather than as a popover</summary>
+    </key>
+  </schema>
+</schemalist>
