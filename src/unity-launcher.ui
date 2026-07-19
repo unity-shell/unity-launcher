@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="UnityLauncher" parent="AstalWindow">
+    <property name="namespace">unity-launcher</property>
+    <property name="layer">top</property>
+    <property name="anchor">top|left|bottom</property>
+    <property name="exclusivity">exclusive</property>
+    <property name="keymode">none</property>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkButton" id="dash_button">
+            <property name="action-name">app.toggle-dash</property>
+            <property name="tooltip-text" translatable="yes">Show Applications</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+            <property name="margin-bottom">6</property>
+            <property name="child">
+              <object class="GtkImage" id="dash_image">
+                <property name="icon-name">start-here-symbolic</property>
+              </object>
+            </property>
+            <style>
+              <class name="action"/>
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scroller">
+            <property name="hscrollbar-policy">never</property>
+            <property name="vscrollbar-policy">external</property>
+            <property name="vexpand">true</property>
+            <property name="propagate-natural-width">true</property>
+            <property name="child">
+              <object class="GtkBox" id="strip">
+                <property name="orientation">vertical</property>
+                <property name="spacing">6</property>
+                <property name="valign">start</property>
+              </object>
+            </property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
