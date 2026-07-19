@@ -11,11 +11,13 @@ unity_launcher_deps = [
 ]
 
 unity_launcher_sources = files(
+  'unity-launcher.c',
   'unity-app-entry.c',
   'unity-app-list.c',
 )
 
 subdir('components')
+subdir('dash')
 
 unity_launcher_resources = gnome.compile_resources(
   'unity-launcher-resources',
@@ -36,6 +38,7 @@ unity_launcher_lib = library(
 
 install_headers(
   'unity-launcher-defs.h',
+  'dash/unity-dash.h',
   subdir: 'unity-launcher',
 )
 
