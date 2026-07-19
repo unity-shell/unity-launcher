@@ -18,3 +18,10 @@ dep_wlclient = dependency('wayland-client')
 dep_astal4 = dependency('astal-4-4.0')
 dep_astalapps = dependency('astal-apps-0.1')
 dep_astalwlr = dependency('astal-wlr-0.1')
+
+gnome = import('gnome')
+
+datadir = get_option('prefix') / get_option('datadir')
+
+subdir('data')
+subdir('src')
