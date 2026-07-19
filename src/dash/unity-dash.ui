@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"/>
+  <requires lib="libadwaita" version="1.0"/>
+  <template class="UnityDash" parent="AstalWindow">
+    <property name="namespace">unity-dash</property>
+    <property name="layer">overlay</property>
+    <property name="anchor">top|bottom|left|right</property>
+    <property name="exclusivity">normal</property>
+    <property name="keymode">on-demand</property>
+    <child>
+      <object class="AdwBin" id="area">
+        <child>
+          <object class="AdwToolbarView" id="panel">
+            <property name="halign">start</property>
+            <property name="valign">start</property>
+            <style>
+              <class name="dash-panel"/>
+            </style>
+            <child type="top">
+              <object class="AdwHeaderBar">
+                <property name="show-start-title-buttons">false</property>
+                <property name="show-end-title-buttons">false</property>
+                <property name="title-widget">
+                  <object class="AdwClamp">
+                    <property name="maximum-size">500</property>
+                    <property name="child">
+                      <object class="GtkSearchEntry" id="entry">
+                        <property name="hexpand">true</property>
+                        <property name="placeholder-text" translatable="yes">Type to search</property>
+                      </object>
+                    </property>
+                  </object>
+                </property>
+                <child type="end">
+                  <object class="GtkButton" id="close_button">
+                    <property name="icon-name">window-close-symbolic</property>
+                    <property name="focusable">false</property>
+                    <style>
+                      <class name="window-control"/>
+                    </style>
+                  </object>
+                </child>
+                <child type="end">
+                  <object class="GtkToggleButton" id="fullscreen_button">
+                    <property name="icon-name">window-maximize-symbolic</property>
+                    <property name="focusable">false</property>
+                    <style>
+                      <class name="window-control"/>
+                    </style>
+                  </object>
+                </child>
+                <child type="end">
+                  <object class="GtkButton" id="minimize_button">
+                    <property name="icon-name">window-minimize-symbolic</property>
+                    <property name="focusable">false</property>
+                    <style>
+                      <class name="window-control"/>
+                    </style>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <property name="content">
+              <object class="AdwViewStack" id="stack">
+                <property name="enable-transitions">true</property>
+                <child>
+                  <object class="AdwViewStackPage">
+                    <property name="name">apps</property>
+                    <property name="child">
+                      <object class="UnityDashApps" id="apps_page"/>
+                    </property>
+                  </object>
+                </child>
+                <child>
+                  <object class="AdwViewStackPage">
+                    <property name="name">search</property>
+                    <property name="child">
+                      <object class="UnityDashSearch" id="search_page"/>
+                    </property>
+                  </object>
+                </child>
+              </object>
+            </property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
