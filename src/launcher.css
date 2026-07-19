@@ -3,3 +3,139 @@ unity-launcher {
   color: var(--light-1);
   padding: 6px;
 }
+
+
+unity-launcher button.action {
+  background-color: var(--light-1);
+  color: var(--dark-5);
+  border-radius: 6px;
+  padding: 0;
+  min-width: 0;
+  min-height: 0;
+}
+unity-launcher button.action:hover {
+  background-color: shade(var(--light-1), 0.95);
+}
+unity-launcher button.action:active {
+  background-color: shade(var(--light-1), 0.88);
+}
+
+/* No drop-target ring while reordering. libadwaita paints an inset accent ring
+ * on any :drop(active) widget (the strip), but the make-room placeholder is the
+ * feedback, so suppress the ring. */
+unity-launcher :drop(active) {
+  box-shadow: none;
+  border-color: transparent;
+}
+
+/* Resting tile hover and press. */
+unity-launcher tile:hover {
+  background-color: alpha(currentColor, 0.10);
+  border-radius: 6px;
+}
+unity-launcher tile:active {
+  background-color: alpha(currentColor, 0.18);
+  border-radius: 6px;
+}
+
+/* Active app whose window has focus. A flat light overlay. */
+unity-launcher tile.active,
+unity-launcher tile.active:hover {
+  background-color: alpha(var(--light-1), 0.35);
+  border-radius: 6px;
+}
+
+/* Running indicator. A small currentColor dot below the icon. Opacity is driven
+ * from C so the dot keeps its layout slot when hidden and the icon never jitters. */
+unity-launcher tile .running-dot {
+  min-width: 6px;
+  min-height: 3px;
+  background-color: currentColor;
+  border-radius: 9999px;
+  opacity: 0.85;
+  transition: opacity 150ms ease-out;
+}
+
+/* The dash window fills the work area but paints nothing itself, so the
+ * desktop shows around the floating panel and outside clicks fall on it. */
+unity-dash {
+  background-color: transparent;
+}
+
+/* The floating panel. An adaptive card floated 6px from the launcher and top
+ * panel with a uniform 12px radius. GTK4 CSS has no overflow, so the header bar,
+ * which paints its own background, rounds its own top corners to match the card
+ * rather than relying on the parent to clip. */
+.dash-panel {
+  margin: 6px;
+  background-color: var(--window-bg-color);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px 2px alpha(black, 0.2);
+}
+.dash-panel > headerbar {
+  border-radius: 12px 12px 0 0;
+}
+
+/* Fullscreen fills the work area, so drop the margin, corners, and shadow. */
+.dash-panel.fullscreen {
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.dash-panel.fullscreen > headerbar {
+  border-radius: 0;
+}
+
+/* Header-bar close, maximize, and minimize controls, from libadwaita's
+ * windowcontrols recipe. A flat button whose image carries the always-on
+ * circular shade at 10% currentColor, deepening on hover (15%) and active (30%). */
+unity-dash headerbar button.window-control {
+  min-width: 24px;
+  padding: 5px;
+  background: none;
+  box-shadow: none;
+  border: none;
+}
+unity-dash headerbar button.window-control > image {
+  background-color: alpha(currentColor, 0.1);
+  border-radius: 100%;
+  padding: 4px;
+}
+unity-dash headerbar button.window-control:hover > image {
+  background-color: alpha(currentColor, 0.15);
+}
+
+/* Search-page section headers. Medium-weight group titles (the
+ * AdwPreferencesGroup title label carries .heading inside its .labels box) and
+ * the Show More toggle. */
+unity-dash .labels > .heading,
+unity-dash button.show-more {
+  font-weight: 500;
+}
+
+/* Dash cells. A rounded hover and active wash, no border or focus ring. */
+dashtile {
+  padding: 8px;
+  border-radius: 8px;
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+dashtile:hover  { background-color: alpha(currentColor, 0.08); }
+dashtile:active { background-color: alpha(currentColor, 0.14); }
+
+/* Search-page app tiles sit in a flowbox. Strip the flowbox child's own chrome
+ * and hover so only the tile's rounded hover shows, but keep a subtle highlight
+ * on the selected (default or first) match. */
+unity-dash flowboxchild {
+  padding: 0;
+  outline: none;
+  background: none;
+}
+unity-dash flowboxchild:hover {
+  background: none;
+}
+unity-dash flowboxchild:selected {
+  background-color: alpha(currentColor, 0.12);
+  border-radius: 8px;
+}
