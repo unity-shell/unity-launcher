@@ -2,22 +2,24 @@ unity-launcher {
   background-color: var(--dark-5);
   color: var(--light-1);
   padding: 6px;
+  border-right: 1px solid alpha(var(--light-1), 0.22);
+  box-shadow: 2px 0 8px 0 alpha(var(--dark-5), 0.5);
 }
 
 
 unity-launcher button.action {
-  background-color: var(--light-1);
-  color: var(--dark-5);
+  background-color: var(--accent-bg-color);
+  color: var(--accent-fg-color);
   border-radius: 6px;
   padding: 0;
   min-width: 0;
   min-height: 0;
 }
 unity-launcher button.action:hover {
-  background-color: shade(var(--light-1), 0.95);
+  background-color: shade(var(--accent-bg-color), 0.95);
 }
 unity-launcher button.action:active {
-  background-color: shade(var(--light-1), 0.88);
+  background-color: shade(var(--accent-bg-color), 0.88);
 }
 
 /* No drop-target ring while reordering. libadwaita paints an inset accent ring
@@ -28,22 +30,11 @@ unity-launcher :drop(active) {
   border-color: transparent;
 }
 
-/* Resting tile hover and press. */
-unity-launcher tile:hover {
-  background-color: alpha(currentColor, 0.10);
-  border-radius: 6px;
-}
-unity-launcher tile:active {
-  background-color: alpha(currentColor, 0.18);
-  border-radius: 6px;
-}
-
-/* Active app whose window has focus. A flat light overlay. */
+unity-launcher tile { border-radius: 6px; }
+unity-launcher tile:hover  { background-color: alpha(currentColor, 0.22); }
+unity-launcher tile:active { background-color: alpha(currentColor, 0.33); }
 unity-launcher tile.active,
-unity-launcher tile.active:hover {
-  background-color: alpha(var(--light-1), 0.35);
-  border-radius: 6px;
-}
+unity-launcher tile.active:hover { background-color: alpha(var(--light-1), 0.35); }
 
 /* Running indicator. A small currentColor dot below the icon. Opacity is driven
  * from C so the dot keeps its layout slot when hidden and the icon never jitters. */
@@ -52,7 +43,6 @@ unity-launcher tile .running-dot {
   min-height: 3px;
   background-color: currentColor;
   border-radius: 9999px;
-  opacity: 0.85;
   transition: opacity 150ms ease-out;
 }
 
@@ -113,29 +103,25 @@ unity-dash button.show-more {
   font-weight: 500;
 }
 
-/* Dash cells. A rounded hover and active wash, no border or focus ring. */
-dashtile {
-  padding: 8px;
-  border-radius: 8px;
+/* Dash cells: browse-page tiles (dashtile) and search-page flowbox children.
+ * Both are flat with no chrome — only a rounded hover/selected wash. */
+dashtile,
+unity-dash flowboxchild {
   outline: none;
   border: none;
   box-shadow: none;
+  background: none;
 }
-dashtile:hover  { background-color: alpha(currentColor, 0.08); }
-dashtile:active { background-color: alpha(currentColor, 0.14); }
+dashtile {
+  padding: 6px;
+  border-radius: 6px;
+}
+dashtile:hover  { background-color: alpha(currentColor, 0.10); }
+dashtile:active { background-color: alpha(currentColor, 0.22); }
 
-/* Search-page app tiles sit in a flowbox. Strip the flowbox child's own chrome
- * and hover so only the tile's rounded hover shows, but keep a subtle highlight
- * on the selected (default or first) match. */
-unity-dash flowboxchild {
-  padding: 0;
-  outline: none;
-  background: none;
-}
-unity-dash flowboxchild:hover {
-  background: none;
-}
+unity-dash flowboxchild { padding: 0; }
+unity-dash flowboxchild:hover { background: none; }
 unity-dash flowboxchild:selected {
-  background-color: alpha(currentColor, 0.12);
-  border-radius: 8px;
+  background-color: alpha(currentColor, 0.20);
+  border-radius: 6px;
 }
