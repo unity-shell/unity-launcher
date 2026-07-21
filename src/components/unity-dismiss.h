@@ -15,7 +15,8 @@ typedef void (*UnityDismissFunc) (gpointer user_data);
 void unity_dismiss_attach (GtkWidget        *surface,
                            GtkWidget        *area,
                            GtkWidget        *content,
-                           UnityDismissFunc  on_dismiss,
+                           UnityDismissFunc  on_minimize,
+                           UnityDismissFunc  on_close,
                            gpointer          user_data);
 
 G_END_DECLS

@@ -24,7 +24,7 @@ struct _UnityDash
   UnityDashSearch *search_page;
 
   gboolean         fullscreen;
-  gboolean         suppress_close;  /* guards the hide/re-present in the maximize toggle */
+  gboolean         suppress_dismiss;  /* guards the hide/re-present in the maximize toggle */
 };
 
 /**
@@ -130,12 +130,12 @@ on_toggle_maximized_action (GtkWidget *widget, const char *name, GVariant *param
 
   /* The native maximize icon only tracks priv->maximized, which is settable
    * only while unmapped. Briefly hide and re-present so the button rebuilds with
-   * the right icon; suppress_close stops the hide's focus-leave from dismissing. */
-  self->suppress_close = TRUE;
+   * the right icon; suppress_dismiss stops the hide's focus-leave from minimizing. */
+  self->suppress_dismiss = TRUE;
   gtk_widget_set_visible (widget, FALSE);
   present_dash (self);
   gtk_widget_grab_focus (GTK_WIDGET (self->entry));
-  self->suppress_close = FALSE;
+  self->suppress_dismiss = FALSE;
 }
 
 static void
@@ -152,8 +152,20 @@ on_grid_map (GtkWidget *widget, gpointer user_data)
   apply_layout (UNITY_DASH (widget));
 }
 
+/* Light dismissal (Escape, click-outside, focus-loss): hide but keep state so
+ * the next open restores it. Guarded against the maximize toggle's re-present. */
 static void
-on_dismiss (gpointer user_data)
+on_dismiss_minimize (gpointer user_data)
+{
+  UnityDash *self = user_data;
+  if (self->suppress_dismiss)
+    return;
+  gtk_widget_set_visible (GTK_WIDGET (self), FALSE);
+}
+
+/* Explicit close (Ctrl+W, Alt+F4, window close-request): hide and reset. */
+static void
+on_dismiss_close (gpointer user_data)
 {
   unity_dash_close (UNITY_DASH (user_data));
 }
@@ -205,7 +217,7 @@ void
 unity_dash_close (UnityDash *self)
 {
   g_return_if_fail (UNITY_IS_DASH (self));
-  if (self->suppress_close || !gtk_widget_get_visible (GTK_WIDGET (self)))
+  if (self->suppress_dismiss || !gtk_widget_get_visible (GTK_WIDGET (self)))
     return;
   unity_dash_reset (self);
   gtk_widget_set_visible (GTK_WIDGET (self), FALSE);
@@ -286,7 +298,8 @@ unity_dash_init (UnityDash *self)
   g_signal_connect (self->search_page, "activated", G_CALLBACK (on_page_activated), self);
 
   unity_dismiss_attach (GTK_WIDGET (self), GTK_WIDGET (self->area),
-                        GTK_WIDGET (self->panel), on_dismiss, self);
+                        GTK_WIDGET (self->panel),
+                        on_dismiss_minimize, on_dismiss_close, self);
 
   unity_dash_reset (self);
 }

@@ -4,11 +4,14 @@
 
 typedef struct
 {
-  UnityDismissFunc cb;
+  UnityDismissFunc on_minimize;
+  UnityDismissFunc on_close;
   gpointer         data;
   GtkWidget       *content;
 } DismissCtx;
 
+/* Escape, clicking outside, and focus loss are light dismissals: minimize,
+ * keeping state. Ctrl+W and Alt+F4 are explicit closes: minimize + reset. */
 static gboolean
 on_key_pressed (GtkEventControllerKey *key, guint keyval, guint keycode,
                 GdkModifierType state, gpointer user_data)
@@ -16,25 +19,29 @@ on_key_pressed (GtkEventControllerKey *key, guint keyval, guint keycode,
   (void) key; (void) keycode;
   DismissCtx *ctx = user_data;
 
-  gboolean escape = (keyval == GDK_KEY_Escape);
   gboolean alt_f4 = (keyval == GDK_KEY_F4) && (state & GDK_ALT_MASK);
   gboolean ctrl_w = (keyval == GDK_KEY_w) && (state & GDK_CONTROL_MASK);
-  if (escape || alt_f4 || ctrl_w)
+  if (alt_f4 || ctrl_w)
     {
-      ctx->cb (ctx->data);
+      ctx->on_close (ctx->data);
+      return GDK_EVENT_STOP;
+    }
+  if (keyval == GDK_KEY_Escape)
+    {
+      ctx->on_minimize (ctx->data);
       return GDK_EVENT_STOP;
     }
   return GDK_EVENT_PROPAGATE;
 }
 
 /* The window's close-request (WM close, gtk_window_close(), Alt+F4 routed by the
- * compositor). Its default handler destroys the surface, so dismiss and stop it. */
+ * compositor). Its default handler destroys the surface, so close and stop it. */
 static gboolean
 on_close_request (GtkWindow *window, gpointer user_data)
 {
   (void) window;
   DismissCtx *ctx = user_data;
-  ctx->cb (ctx->data);
+  ctx->on_close (ctx->data);
   return GDK_EVENT_STOP;
 }
 
@@ -52,7 +59,7 @@ on_area_pressed (GtkGestureClick *gesture, gint n_press, gdouble x, gdouble y,
     return;
 
   gtk_gesture_set_state (GTK_GESTURE (gesture), GTK_EVENT_SEQUENCE_CLAIMED);
-  ctx->cb (ctx->data);
+  ctx->on_minimize (ctx->data);
 }
 
 static void
@@ -60,7 +67,7 @@ on_focus_leave (GtkEventControllerFocus *focus, gpointer user_data)
 {
   (void) focus;
   DismissCtx *ctx = user_data;
-  ctx->cb (ctx->data);
+  ctx->on_minimize (ctx->data);
 }
 
 /**
@@ -68,27 +75,32 @@ on_focus_leave (GtkEventControllerFocus *focus, gpointer user_data)
  * @surface: the layer-shell surface to make dismissable
  * @area: the full-surface widget that catches clicks outside @content
  * @content: the content widget clicks inside must not dismiss
- * @on_dismiss: callback invoked when the surface should dismiss
- * @user_data: data passed to @on_dismiss
+ * @on_minimize: callback for a light dismissal (keep state)
+ * @on_close: callback for an explicit close (reset state)
+ * @user_data: data passed to the callbacks
  *
  * Gives a layer-shell surface GtkPopover-like dismissal, which layer-shell does
- * not provide itself. Pressing Escape, Alt+F4 or Ctrl+W, clicking outside
- * @content (caught on the full-surface @area in the capture phase), keyboard
- * focus leaving the surface, or a window close-request each invoke @on_dismiss.
+ * not provide itself. Escape, clicking outside @content (caught on the
+ * full-surface @area in the capture phase), or keyboard focus leaving the
+ * surface invoke @on_minimize; Ctrl+W, Alt+F4 or a window close-request invoke
+ * @on_close.
  */
 void
 unity_dismiss_attach (GtkWidget *surface, GtkWidget *area, GtkWidget *content,
-                      UnityDismissFunc on_dismiss, gpointer user_data)
+                      UnityDismissFunc on_minimize, UnityDismissFunc on_close,
+                      gpointer user_data)
 {
   g_return_if_fail (GTK_IS_WIDGET (surface));
   g_return_if_fail (GTK_IS_WIDGET (area));
   g_return_if_fail (GTK_IS_WIDGET (content));
-  g_return_if_fail (on_dismiss != NULL);
+  g_return_if_fail (on_minimize != NULL);
+  g_return_if_fail (on_close != NULL);
 
   DismissCtx *ctx = g_new0 (DismissCtx, 1);
-  ctx->cb      = on_dismiss;
-  ctx->data    = user_data;
-  ctx->content = content;
+  ctx->on_minimize = on_minimize;
+  ctx->on_close    = on_close;
+  ctx->data        = user_data;
+  ctx->content     = content;
   g_object_set_data_full (G_OBJECT (surface), "unity-dismiss", ctx, g_free);
 
   GtkGesture *click = gtk_gesture_click_new ();
