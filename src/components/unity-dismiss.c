@@ -10,17 +10,32 @@ typedef struct
 } DismissCtx;
 
 static gboolean
-on_escape (GtkEventControllerKey *key, guint keyval, guint keycode,
-           GdkModifierType state, gpointer user_data)
+on_key_pressed (GtkEventControllerKey *key, guint keyval, guint keycode,
+                GdkModifierType state, gpointer user_data)
 {
-  (void) key; (void) keycode; (void) state;
+  (void) key; (void) keycode;
   DismissCtx *ctx = user_data;
-  if (keyval == GDK_KEY_Escape)
+
+  gboolean escape = (keyval == GDK_KEY_Escape);
+  gboolean alt_f4 = (keyval == GDK_KEY_F4) && (state & GDK_ALT_MASK);
+  gboolean ctrl_w = (keyval == GDK_KEY_w) && (state & GDK_CONTROL_MASK);
+  if (escape || alt_f4 || ctrl_w)
     {
       ctx->cb (ctx->data);
       return GDK_EVENT_STOP;
     }
   return GDK_EVENT_PROPAGATE;
+}
+
+/* The window's close-request (WM close, gtk_window_close(), Alt+F4 routed by the
+ * compositor). Its default handler destroys the surface, so dismiss and stop it. */
+static gboolean
+on_close_request (GtkWindow *window, gpointer user_data)
+{
+  (void) window;
+  DismissCtx *ctx = user_data;
+  ctx->cb (ctx->data);
+  return GDK_EVENT_STOP;
 }
 
 static void
@@ -57,9 +72,9 @@ on_focus_leave (GtkEventControllerFocus *focus, gpointer user_data)
  * @user_data: data passed to @on_dismiss
  *
  * Gives a layer-shell surface GtkPopover-like dismissal, which layer-shell does
- * not provide itself. Pressing Escape, clicking outside @content (caught on the
- * full-surface @area in the capture phase), or keyboard focus leaving the
- * surface each invoke @on_dismiss.
+ * not provide itself. Pressing Escape, Alt+F4 or Ctrl+W, clicking outside
+ * @content (caught on the full-surface @area in the capture phase), keyboard
+ * focus leaving the surface, or a window close-request each invoke @on_dismiss.
  */
 void
 unity_dismiss_attach (GtkWidget *surface, GtkWidget *area, GtkWidget *content,
@@ -83,10 +98,13 @@ unity_dismiss_attach (GtkWidget *surface, GtkWidget *area, GtkWidget *content,
 
   GtkEventController *key = gtk_event_controller_key_new ();
   gtk_event_controller_set_propagation_phase (key, GTK_PHASE_CAPTURE);
-  g_signal_connect (key, "key-pressed", G_CALLBACK (on_escape), ctx);
+  g_signal_connect (key, "key-pressed", G_CALLBACK (on_key_pressed), ctx);
   gtk_widget_add_controller (surface, key);
 
   GtkEventController *focus = gtk_event_controller_focus_new ();
   g_signal_connect (focus, "leave", G_CALLBACK (on_focus_leave), ctx);
   gtk_widget_add_controller (surface, focus);
+
+  if (GTK_IS_WINDOW (surface))
+    g_signal_connect (surface, "close-request", G_CALLBACK (on_close_request), ctx);
 }

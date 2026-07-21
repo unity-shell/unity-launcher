@@ -19,14 +19,12 @@ struct _UnityDash
   AdwBin          *area;
   AdwToolbarView  *panel;
   GtkSearchEntry  *entry;
-  GtkToggleButton *fullscreen_button;
-  GtkButton       *close_button;
-  GtkButton       *minimize_button;
   AdwViewStack    *stack;
   UnityDashApps   *apps_page;
   UnityDashSearch *search_page;
 
   gboolean         fullscreen;
+  gboolean         suppress_close;  /* guards the hide/re-present in the maximize toggle */
 };
 
 /**
@@ -46,8 +44,6 @@ struct _UnityDash
  * focus loss outside the panel, or when a page launches something.
  */
 G_DEFINE_FINAL_TYPE (UnityDash, unity_dash, ASTAL_TYPE_WINDOW)
-
-static void on_fullscreen_toggled (GtkToggleButton *button, gpointer user_data);
 
 static void
 apply_layout (UnityDash *self)
@@ -81,41 +77,65 @@ apply_layout (UnityDash *self)
                                  geo.height * POPOVER_NUM / POPOVER_DEN);
 }
 
+/* Mirror the fullscreen state onto the real window's maximized state so the
+ * header bar's native maximize button shows the right icon (maximize vs restore).
+ * Only effective while the window is unmapped: gtk_window_maximize() then sets
+ * priv->maximized directly and it sticks — the layer-shell surface never gets a
+ * competing maximized state back from the compositor. */
 static void
-sync_fullscreen_state (UnityDash *self)
+sync_window_maximized (UnityDash *self)
 {
-  gtk_button_set_icon_name (
-    GTK_BUTTON (self->fullscreen_button),
-    self->fullscreen ? "window-restore-symbolic" : "window-maximize-symbolic");
+  if (self->fullscreen)
+    gtk_window_maximize (GTK_WINDOW (self));
+  else
+    gtk_window_unmaximize (GTK_WINDOW (self));
+}
 
-  g_signal_handlers_block_by_func (self->fullscreen_button, on_fullscreen_toggled, self);
-  gtk_toggle_button_set_active (self->fullscreen_button, self->fullscreen);
-  g_signal_handlers_unblock_by_func (self->fullscreen_button, on_fullscreen_toggled, self);
+/* Show the window, syncing the maximized state first while it is still unmapped
+ * so the native maximize button appears with the correct icon. */
+static void
+present_dash (UnityDash *self)
+{
+  sync_window_maximized (self);
+  gtk_window_present (GTK_WINDOW (self));
+}
+
+/* Overrides of GtkWindow's built-in window.* actions, which the AdwHeaderBar
+ * native controls target. Installed in class_init, so the stock close, minimize
+ * and maximize buttons drive the dash's own behaviour. */
+static void
+on_close_action (GtkWidget *widget, const char *name, GVariant *param)
+{
+  (void) name; (void) param;
+  unity_dash_close (UNITY_DASH (widget));
 }
 
 static void
-on_fullscreen_toggled (GtkToggleButton *button, gpointer user_data)
+on_minimize_action (GtkWidget *widget, const char *name, GVariant *param)
 {
-  UnityDash *self = user_data;
-  self->fullscreen = gtk_toggle_button_get_active (button);
-  sync_fullscreen_state (self);
+  (void) name; (void) param;
+  gtk_widget_set_visible (widget, FALSE);
+}
+
+static void
+on_toggle_maximized_action (GtkWidget *widget, const char *name, GVariant *param)
+{
+  (void) name; (void) param;
+  UnityDash *self = UNITY_DASH (widget);
+
+  self->fullscreen = !self->fullscreen;
   apply_layout (self);
   g_settings_set_boolean (self->settings, UNITY_LAUNCHER_KEY_DASH_MAXIMIZED,
                           self->fullscreen);
-}
 
-static void
-on_close_clicked (GtkButton *button, gpointer user_data)
-{
-  (void) button;
-  unity_dash_close (UNITY_DASH (user_data));
-}
-
-static void
-on_minimize_clicked (GtkButton *button, gpointer user_data)
-{
-  (void) button;
-  gtk_widget_set_visible (GTK_WIDGET (user_data), FALSE);
+  /* The native maximize icon only tracks priv->maximized, which is settable
+   * only while unmapped. Briefly hide and re-present so the button rebuilds with
+   * the right icon; suppress_close stops the hide's focus-leave from dismissing. */
+  self->suppress_close = TRUE;
+  gtk_widget_set_visible (widget, FALSE);
+  present_dash (self);
+  gtk_widget_grab_focus (GTK_WIDGET (self->entry));
+  self->suppress_close = FALSE;
 }
 
 static void
@@ -167,7 +187,6 @@ unity_dash_reset (UnityDash *self)
 
   self->fullscreen = g_settings_get_boolean (
     self->settings, UNITY_LAUNCHER_KEY_DASH_MAXIMIZED);
-  sync_fullscreen_state (self);
   apply_layout (self);
 
   unity_dash_search_controller_reset (self->search);
@@ -186,7 +205,7 @@ void
 unity_dash_close (UnityDash *self)
 {
   g_return_if_fail (UNITY_IS_DASH (self));
-  if (!gtk_widget_get_visible (GTK_WIDGET (self)))
+  if (self->suppress_close || !gtk_widget_get_visible (GTK_WIDGET (self)))
     return;
   unity_dash_reset (self);
   gtk_widget_set_visible (GTK_WIDGET (self), FALSE);
@@ -209,7 +228,7 @@ unity_dash_toggle (UnityDash *self)
   if (gtk_widget_get_visible (GTK_WIDGET (self)))
     gtk_widget_set_visible (GTK_WIDGET (self), FALSE);
   else
-    gtk_window_present (GTK_WINDOW (self));
+    present_dash (self);
 }
 
 static void
@@ -237,13 +256,16 @@ unity_dash_class_init (UnityDashClass *klass)
   gtk_widget_class_bind_template_child (widget_class, UnityDash, area);
   gtk_widget_class_bind_template_child (widget_class, UnityDash, panel);
   gtk_widget_class_bind_template_child (widget_class, UnityDash, entry);
-  gtk_widget_class_bind_template_child (widget_class, UnityDash, fullscreen_button);
-  gtk_widget_class_bind_template_child (widget_class, UnityDash, close_button);
-  gtk_widget_class_bind_template_child (widget_class, UnityDash, minimize_button);
   gtk_widget_class_bind_template_child (widget_class, UnityDash, stack);
   gtk_widget_class_bind_template_child (widget_class, UnityDash, apps_page);
   gtk_widget_class_bind_template_child (widget_class, UnityDash, search_page);
   gtk_widget_class_set_css_name (widget_class, "unity-dash");
+
+  /* Override GtkWindow's built-in window controls so the header bar's native
+   * close, minimize and maximize buttons drive the dash instead. */
+  gtk_widget_class_install_action (widget_class, "window.close",            NULL, on_close_action);
+  gtk_widget_class_install_action (widget_class, "window.minimize",         NULL, on_minimize_action);
+  gtk_widget_class_install_action (widget_class, "window.toggle-maximized", NULL, on_toggle_maximized_action);
 }
 
 static void
@@ -258,10 +280,6 @@ unity_dash_init (UnityDash *self)
   self->search = unity_dash_search_controller_new (
     self->entry, self->stack, self->search_page);
 
-  g_signal_connect (self->fullscreen_button, "toggled",
-                    G_CALLBACK (on_fullscreen_toggled), self);
-  g_signal_connect (self->close_button, "clicked", G_CALLBACK (on_close_clicked), self);
-  g_signal_connect (self->minimize_button, "clicked", G_CALLBACK (on_minimize_clicked), self);
   g_signal_connect (self, "map", G_CALLBACK (on_grid_map), NULL);
 
   g_signal_connect (self->apps_page,   "activated", G_CALLBACK (on_page_activated), self);

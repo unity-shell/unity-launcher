@@ -20,7 +20,7 @@
             <child type="top">
               <object class="AdwHeaderBar">
                 <property name="show-start-title-buttons">false</property>
-                <property name="show-end-title-buttons">false</property>
+                <property name="show-end-title-buttons">true</property>
                 <property name="title-widget">
                   <object class="AdwClamp">
                     <property name="maximum-size">500</property>
@@ -32,33 +32,6 @@
                     </property>
                   </object>
                 </property>
-                <child type="end">
-                  <object class="GtkButton" id="close_button">
-                    <property name="icon-name">window-close-symbolic</property>
-                    <property name="focusable">false</property>
-                    <style>
-                      <class name="window-control"/>
-                    </style>
-                  </object>
-                </child>
-                <child type="end">
-                  <object class="GtkToggleButton" id="fullscreen_button">
-                    <property name="icon-name">window-maximize-symbolic</property>
-                    <property name="focusable">false</property>
-                    <style>
-                      <class name="window-control"/>
-                    </style>
-                  </object>
-                </child>
-                <child type="end">
-                  <object class="GtkButton" id="minimize_button">
-                    <property name="icon-name">window-minimize-symbolic</property>
-                    <property name="focusable">false</property>
-                    <style>
-                      <class name="window-control"/>
-                    </style>
-                  </object>
-                </child>
               </object>
             </child>
             <property name="content">

@@ -76,25 +76,6 @@ unity-dash {
   border-radius: 0;
 }
 
-/* Header-bar close, maximize, and minimize controls, from libadwaita's
- * windowcontrols recipe. A flat button whose image carries the always-on
- * circular shade at 10% currentColor, deepening on hover (15%) and active (30%). */
-unity-dash headerbar button.window-control {
-  min-width: 24px;
-  padding: 5px;
-  background: none;
-  box-shadow: none;
-  border: none;
-}
-unity-dash headerbar button.window-control > image {
-  background-color: alpha(currentColor, 0.1);
-  border-radius: 100%;
-  padding: 4px;
-}
-unity-dash headerbar button.window-control:hover > image {
-  background-color: alpha(currentColor, 0.15);
-}
-
 /* Search-page section headers. Medium-weight group titles (the
  * AdwPreferencesGroup title label carries .heading inside its .labels box) and
  * the Show More toggle. */
