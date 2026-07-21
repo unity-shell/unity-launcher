@@ -204,11 +204,12 @@ on_get_metas (GObject *source, GAsyncResult *res, gpointer user_data)
   GVariant *meta;
   while ((meta = g_variant_iter_next_value (&outer)))
     {
-      g_autoptr (GVariant) v_id    = g_variant_lookup_value (meta, "id",          NULL);
-      g_autoptr (GVariant) v_name  = g_variant_lookup_value (meta, "name",        NULL);
-      g_autoptr (GVariant) v_desc  = g_variant_lookup_value (meta, "description", NULL);
-      g_autoptr (GVariant) v_icon  = g_variant_lookup_value (meta, "icon",        NULL);
-      g_autoptr (GVariant) v_gicon = g_variant_lookup_value (meta, "gicon",       NULL);
+      g_autoptr (GVariant) v_id    = g_variant_lookup_value (meta, "id",            NULL);
+      g_autoptr (GVariant) v_name  = g_variant_lookup_value (meta, "name",          NULL);
+      g_autoptr (GVariant) v_desc  = g_variant_lookup_value (meta, "description",   NULL);
+      g_autoptr (GVariant) v_clip  = g_variant_lookup_value (meta, "clipboardText", NULL);
+      g_autoptr (GVariant) v_icon  = g_variant_lookup_value (meta, "icon",          NULL);
+      g_autoptr (GVariant) v_gicon = g_variant_lookup_value (meta, "gicon",         NULL);
 
       if (v_id != NULL && v_name != NULL)
         {
@@ -218,6 +219,7 @@ on_get_metas (GObject *source, GAsyncResult *res, gpointer user_data)
             g_variant_get_string (v_id, NULL),
             g_variant_get_string (v_name, NULL),
             v_desc ? g_variant_get_string (v_desc, NULL) : NULL,
+            v_clip ? g_variant_get_string (v_clip, NULL) : NULL,
             gicon,
             (const gchar *const *) q->terms));
         }

@@ -15,13 +15,15 @@ UnitySearchResult *unity_search_result_new (UnitySearchProvider *provider,
                                                        const gchar              *id,
                                                        const gchar              *name,
                                                        const gchar              *description,
+                                                       const gchar              *clipboard_text,
                                                        GIcon                    *gicon,
                                                        const gchar *const       *terms);
 
-const gchar *unity_search_result_get_id          (UnitySearchResult *self);
-const gchar *unity_search_result_get_name        (UnitySearchResult *self);
-const gchar *unity_search_result_get_description  (UnitySearchResult *self);
-GIcon       *unity_search_result_get_gicon        (UnitySearchResult *self);
+const gchar *unity_search_result_get_id             (UnitySearchResult *self);
+const gchar *unity_search_result_get_name           (UnitySearchResult *self);
+const gchar *unity_search_result_get_description     (UnitySearchResult *self);
+const gchar *unity_search_result_get_clipboard_text  (UnitySearchResult *self);
+GIcon       *unity_search_result_get_gicon           (UnitySearchResult *self);
 
 void         unity_search_result_activate         (UnitySearchResult *self,
                                                          guint32                 timestamp);

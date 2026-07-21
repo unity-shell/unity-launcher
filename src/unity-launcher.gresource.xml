@@ -5,6 +5,7 @@
     <file>dash/unity-dash.ui</file>
     <file>dash/unity-dash-apps.ui</file>
     <file>dash/unity-dash-search.ui</file>
+    <file>dash/search/unity-search-app-results.ui</file>
     <file>launcher.css</file>
   </gresource>
 </gresources>

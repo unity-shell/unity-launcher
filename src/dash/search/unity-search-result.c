@@ -10,6 +10,7 @@ struct _UnitySearchResult
   gchar                    *id;
   gchar                    *name;
   gchar                    *description;
+  gchar                    *clipboard_text;
   GIcon                    *gicon;
   GStrv                     terms;
 };
@@ -32,6 +33,7 @@ G_DEFINE_FINAL_TYPE (UnitySearchResult, unity_search_result, G_TYPE_OBJECT)
  * @id: the provider-local result identifier.
  * @name: the display name.
  * @description: (nullable): a longer description, or %NULL.
+ * @clipboard_text: (nullable): text to copy for this result, or %NULL.
  * @gicon: (nullable): an icon for the result, or %NULL.
  * @terms: the query terms that produced the result.
  *
@@ -44,16 +46,18 @@ unity_search_result_new (UnitySearchProvider *provider,
                                const gchar              *id,
                                const gchar              *name,
                                const gchar              *description,
+                               const gchar              *clipboard_text,
                                GIcon                    *gicon,
                                const gchar *const       *terms)
 {
   UnitySearchResult *self = g_object_new (UNITY_TYPE_SEARCH_RESULT, NULL);
-  self->provider    = provider ? g_object_ref (provider) : NULL;
-  self->id          = g_strdup (id);
-  self->name        = g_strdup (name);
-  self->description = g_strdup (description);
-  self->gicon       = gicon ? g_object_ref (gicon) : NULL;
-  self->terms       = g_strdupv ((gchar **) terms);
+  self->provider       = provider ? g_object_ref (provider) : NULL;
+  self->id             = g_strdup (id);
+  self->name           = g_strdup (name);
+  self->description    = g_strdup (description);
+  self->clipboard_text = g_strdup (clipboard_text);
+  self->gicon          = gicon ? g_object_ref (gicon) : NULL;
+  self->terms          = g_strdupv ((gchar **) terms);
   return self;
 }
 
@@ -100,6 +104,22 @@ unity_search_result_get_description (UnitySearchResult *self)
 {
   g_return_val_if_fail (UNITY_IS_SEARCH_RESULT (self), NULL);
   return self->description;
+}
+
+/**
+ * unity_search_result_get_clipboard_text:
+ * @self: a UnitySearchResult.
+ *
+ * Gets the text to place on the clipboard for the result, when the provider
+ * offers one (e.g. a calculator answer).
+ *
+ * Returns: (transfer none) (nullable): the clipboard text, or %NULL.
+ */
+const gchar *
+unity_search_result_get_clipboard_text (UnitySearchResult *self)
+{
+  g_return_val_if_fail (UNITY_IS_SEARCH_RESULT (self), NULL);
+  return self->clipboard_text;
 }
 
 /**
@@ -150,6 +170,7 @@ unity_search_result_finalize (GObject *object)
   g_free (self->id);
   g_free (self->name);
   g_free (self->description);
+  g_free (self->clipboard_text);
   g_strfreev (self->terms);
   G_OBJECT_CLASS (unity_search_result_parent_class)->finalize (object);
 }
