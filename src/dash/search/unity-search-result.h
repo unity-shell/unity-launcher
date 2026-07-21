@@ -24,6 +24,7 @@ const gchar *unity_search_result_get_name           (UnitySearchResult *self);
 const gchar *unity_search_result_get_description     (UnitySearchResult *self);
 const gchar *unity_search_result_get_clipboard_text  (UnitySearchResult *self);
 GIcon       *unity_search_result_get_gicon           (UnitySearchResult *self);
+const gchar *const *unity_search_result_get_terms    (UnitySearchResult *self);
 
 void         unity_search_result_activate         (UnitySearchResult *self,
                                                          guint32                 timestamp);

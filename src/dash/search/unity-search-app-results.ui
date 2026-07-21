@@ -12,6 +12,7 @@
             <style>
               <class name="flat"/>
               <class name="show-more"/>
+              <class name="body"/>
             </style>
           </object>
         </property>

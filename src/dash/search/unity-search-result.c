@@ -138,6 +138,21 @@ unity_search_result_get_gicon (UnitySearchResult *self)
 }
 
 /**
+ * unity_search_result_get_terms:
+ * @self: a UnitySearchResult.
+ *
+ * Gets the query terms that produced the result.
+ *
+ * Returns: (transfer none): the terms.
+ */
+const gchar *const *
+unity_search_result_get_terms (UnitySearchResult *self)
+{
+  g_return_val_if_fail (UNITY_IS_SEARCH_RESULT (self), NULL);
+  return (const gchar *const *) self->terms;
+}
+
+/**
  * unity_search_result_activate:
  * @self: a UnitySearchResult.
  * @timestamp: an activation timestamp.

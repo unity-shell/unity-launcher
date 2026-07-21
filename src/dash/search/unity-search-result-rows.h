@@ -2,6 +2,7 @@
 
 #include <gtk/gtk.h>
 
+#include "dash/search/unity-search-provider.h"
 #include "dash/search/unity-search-result.h"
 
 G_BEGIN_DECLS
@@ -11,6 +12,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (UnitySearchResultRows, unity_search_result_rows,
                       UNITY, SEARCH_RESULT_ROWS, GtkBox)
 
-GtkWidget *unity_search_result_rows_new (const gchar *title, GPtrArray *results);
+GtkWidget *unity_search_result_rows_new (UnitySearchProvider *provider,
+                                         GPtrArray           *results);
 
 G_END_DECLS

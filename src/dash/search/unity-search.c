@@ -93,7 +93,13 @@ unity_search_query (UnitySearch *self, const gchar *query, guint limit)
 
   g_auto (GStrv) terms = query ? split_terms (query) : NULL;
   if (terms == NULL)
-    return;
+    {
+      /* Cleared search: forget each provider's last query so the next one starts
+       * fresh rather than as a subsearch of stale results. */
+      for (GList *l = self->providers; l != NULL; l = l->next)
+        unity_search_provider_reset (l->data);
+      return;
+    }
 
   self->cancellable = g_cancellable_new ();
   for (GList *l = self->providers; l != NULL; l = l->next)

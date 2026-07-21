@@ -31,4 +31,10 @@ void       unity_search_provider_activate_result (UnitySearchProvider *self,
                                                         const gchar *const       *terms,
                                                         guint32                   timestamp);
 
+void       unity_search_provider_launch_search   (UnitySearchProvider *self,
+                                                        const gchar *const       *terms,
+                                                        guint32                   timestamp);
+
+void       unity_search_provider_reset           (UnitySearchProvider *self);
+
 G_END_DECLS

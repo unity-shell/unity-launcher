@@ -76,12 +76,8 @@ unity-dash {
   border-radius: 0;
 }
 
-/* Search-page section headers. Medium-weight group titles (the
- * AdwPreferencesGroup title label carries .heading inside its .labels box) and
- * the Show More toggle. */
-unity-dash .labels > .heading,
-unity-dash button.show-more {
-  font-weight: 500;
+unity-dash .labels > .heading {
+  font-weight: normal;
 }
 
 /* Dash cells: browse-page tiles (dashtile) and search-page flowbox children.

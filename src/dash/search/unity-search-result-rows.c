@@ -16,7 +16,10 @@
  */
 struct _UnitySearchResultRows
 {
-  GtkBox parent_instance;
+  GtkBox               parent_instance;
+
+  UnitySearchProvider *provider;  /* for the header's launch-in-app action */
+  GStrv                terms;     /* the query terms handed to LaunchSearch */
 };
 
 G_DEFINE_FINAL_TYPE (UnitySearchResultRows, unity_search_result_rows, GTK_TYPE_BOX)
@@ -86,7 +89,10 @@ create_row (UnitySearchResultRows *self, UnitySearchResult *r)
                                  unity_search_result_get_name (r));
   const gchar *desc = unity_search_result_get_description (r);
   if (desc != NULL && *desc != '\0')
-    adw_action_row_set_subtitle (row, desc);
+    {
+      adw_action_row_set_subtitle (row, desc);
+      adw_action_row_set_subtitle_lines (row, 1);
+    }
 
   GIcon *gicon = unity_search_result_get_gicon (r);
   if (gicon != NULL)
@@ -113,19 +119,53 @@ create_column (void)
   return list;
 }
 
+/* The header-suffix button is the provider's "open in <app>" action: it calls
+ * LaunchSearch and closes the dash, mirroring GNOME Shell. */
 static void
-populate (UnitySearchResultRows *self, const gchar *title, GPtrArray *results)
+on_launch_clicked (GtkButton *button, gpointer user_data)
 {
-  /* The provider title keeps its AdwPreferencesGroup styling; the group's own
-   * list stays empty (and so hidden) and the results sit in the columns below. */
+  (void) button;
+  UnitySearchResultRows *self = user_data;
+  if (self->provider != NULL)
+    unity_search_provider_launch_search (
+      self->provider, (const gchar *const *) self->terms, GDK_CURRENT_TIME);
+  g_signal_emit (self, signals[SIG_ACTIVATED], 0);
+}
+
+static void
+populate (UnitySearchResultRows *self, GPtrArray *results)
+{
+  /* AdwPreferencesGroup gives the provider title; its header-suffix carries the
+   * "Open in <app>" launch action. The group's own list stays empty (and so
+   * hidden); the results sit below it. */
+  const gchar *name = unity_search_provider_get_name (self->provider);
+
   AdwPreferencesGroup *group = ADW_PREFERENCES_GROUP (adw_preferences_group_new ());
-  adw_preferences_group_set_title (group, title);
+  adw_preferences_group_set_title (group, name);
+
+  g_autofree gchar *label = g_strdup_printf ("Open in %s", name);
+  GtkWidget *launch = gtk_button_new_with_label (label);
+  gtk_widget_add_css_class (launch, "flat");
+  gtk_widget_add_css_class (launch, "body");
+  gtk_widget_set_valign (launch, GTK_ALIGN_CENTER);
+  g_signal_connect (launch, "clicked", G_CALLBACK (on_launch_clicked), self);
+  adw_preferences_group_set_header_suffix (group, launch);
+
   gtk_box_append (GTK_BOX (self), GTK_WIDGET (group));
 
-  /* Always two homogeneous columns so every provider's rows share one width,
-   * the first column holding the extra row on odd counts. A single result keeps
-   * an empty right cell rather than stretching to the full width. */
-  guint n    = results != NULL ? results->len : 0;
+  guint n = results != NULL ? results->len : 0;
+
+  /* One result is a normal full-width row; several split into two columns, the
+   * first taking the extra on odd counts (mirroring Bazaar's dual-column list). */
+  if (n <= 1)
+    {
+      GtkListBox *list = create_column ();
+      for (guint i = 0; i < n; i++)
+        gtk_list_box_append (list, create_row (self, results->pdata[i]));
+      gtk_box_append (GTK_BOX (self), GTK_WIDGET (list));
+      return;
+    }
+
   guint left = (n + 1) / 2;
 
   GtkWidget *columns = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 12);
@@ -137,42 +177,49 @@ populate (UnitySearchResultRows *self, const gchar *title, GPtrArray *results)
     gtk_list_box_append (left_list, create_row (self, results->pdata[i]));
   gtk_box_append (GTK_BOX (columns), GTK_WIDGET (left_list));
 
-  if (n > left)
-    {
-      GtkListBox *right_list = create_column ();
-      for (guint i = left; i < n; i++)
-        gtk_list_box_append (right_list, create_row (self, results->pdata[i]));
-      gtk_box_append (GTK_BOX (columns), GTK_WIDGET (right_list));
-    }
-  else
-    {
-      /* Reserve the empty half so the lone row stays column-width. */
-      gtk_box_append (GTK_BOX (columns), gtk_box_new (GTK_ORIENTATION_VERTICAL, 0));
-    }
+  GtkListBox *right_list = create_column ();
+  for (guint i = left; i < n; i++)
+    gtk_list_box_append (right_list, create_row (self, results->pdata[i]));
+  gtk_box_append (GTK_BOX (columns), GTK_WIDGET (right_list));
 
   gtk_box_append (GTK_BOX (self), columns);
 }
 
 /**
  * unity_search_result_rows_new:
- * @title: the provider name shown above the rows.
+ * @provider: the provider whose results these are; drives the header's launch.
  * @results: (element-type UnitySearchResult): the results to render.
  *
- * Creates a titled two-column group of search-result rows.
+ * Creates a group of search-result rows headed by the provider's launch action.
  *
  * Returns: (transfer full): a new UnitySearchResultRows.
  */
 GtkWidget *
-unity_search_result_rows_new (const gchar *title, GPtrArray *results)
+unity_search_result_rows_new (UnitySearchProvider *provider, GPtrArray *results)
 {
   UnitySearchResultRows *self = g_object_new (UNITY_TYPE_SEARCH_RESULT_ROWS, NULL);
-  populate (self, title, results);
+  self->provider = provider ? g_object_ref (provider) : NULL;
+  if (results != NULL && results->len > 0)
+    self->terms = g_strdupv (
+      (gchar **) unity_search_result_get_terms (results->pdata[0]));
+  populate (self, results);
   return GTK_WIDGET (self);
+}
+
+static void
+unity_search_result_rows_dispose (GObject *object)
+{
+  UnitySearchResultRows *self = UNITY_SEARCH_RESULT_ROWS (object);
+  g_clear_object (&self->provider);
+  g_clear_pointer (&self->terms, g_strfreev);
+  G_OBJECT_CLASS (unity_search_result_rows_parent_class)->dispose (object);
 }
 
 static void
 unity_search_result_rows_class_init (UnitySearchResultRowsClass *klass)
 {
+  G_OBJECT_CLASS (klass)->dispose = unity_search_result_rows_dispose;
+
   signals[SIG_ACTIVATED] = g_signal_new (
     "activated", G_TYPE_FROM_CLASS (klass), G_SIGNAL_RUN_LAST,
     0, NULL, NULL, NULL, G_TYPE_NONE, 0);

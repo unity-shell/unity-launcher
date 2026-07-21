@@ -58,8 +58,7 @@ on_provider_results (UnitySearch *search, UnitySearchProvider *provider,
   (void) search;
   UnityDashSearch *self = user_data;
 
-  GtkWidget *rows = unity_search_result_rows_new (
-    unity_search_provider_get_name (provider), results);
+  GtkWidget *rows = unity_search_result_rows_new (provider, results);
   g_signal_connect_object (rows, "activated", G_CALLBACK (on_child_activated), self, 0);
 
   gtk_box_append (self->groups, rows);
